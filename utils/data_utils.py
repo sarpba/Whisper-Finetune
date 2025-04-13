@@ -41,25 +41,27 @@ def to_simple(text: str or List[str]):
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
 
-    def __call__(self, features: List[Dict[str, Union[List[int], torch.Tensor]]]) -> Dict[str, torch.Tensor]:
-        # split inputs and labels since they have to be of different lengths and need different padding methods
-        # first treat the audio inputs by simply returning torch tensors
-        input_features = [{"input_features": feature["input_features"][0]} for feature in features]
+    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        # Csak az input_features és labels értékeket dolgozzuk fel, ignorálva minden extra kulcsot
+        cleaned_features = []
+        for feature in features:
+            cleaned_feature = {
+                "input_features": feature["input_features"][0],
+                "labels": feature["labels"]
+            }
+            cleaned_features.append(cleaned_feature)
+
+        # Audio input feldolgozása
+        input_features = [{"input_features": cf["input_features"]} for cf in cleaned_features]
         batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
 
-        # get the tokenized label sequences
-        label_features = [{"input_ids": feature["labels"]} for feature in features]
-        # pad the labels to max length
+        # Label-ek feldolgozása
+        label_features = [{"input_ids": cf["labels"]} for cf in cleaned_features]
         labels_batch = self.processor.tokenizer.pad(label_features, return_tensors="pt")
-
-        # replace padding with -100 to ignore loss correctly
         labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
 
-        # if bos token is appended in previous tokenization step,
-        # cut bos token here as it's append later anyways
         if (labels[:, 0] == self.processor.tokenizer.bos_token_id).all().cpu().item():
             labels = labels[:, 1:]
 
         batch["labels"] = labels
-
         return batch

@@ -2,10 +2,17 @@ import argparse
 import functools
 import os
 import platform
+from typing import Dict, List, Optional, Tuple, Union, Any
+
+import torch
+from torch import nn
+import platform
 
 import torch
 from peft import LoraConfig, get_peft_model, AdaLoraConfig, PeftModel, prepare_model_for_kbit_training
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, WhisperForConditionalGeneration, WhisperProcessor
+from transformers.trainer import TRAINING_ARGS_NAME
+from transformers.utils import is_peft_available
 
 from utils.callback import SavePeftModelCallback
 from utils.data_utils import DataCollatorSpeechSeq2SeqWithPadding
@@ -27,7 +34,7 @@ add_arg("num_workers",   type=int, default=8,       help="Adatbetöltő szálak 
 add_arg("learning_rate", type=float, default=1e-3,  help="Tanulási ráta")
 add_arg("min_audio_len", type=float, default=0.5,   help="Minimális hangfájl hossz, másodpercben")
 add_arg("max_audio_len", type=float, default=30,    help="Maximális hangfájl hossz, másodpercben")
-add_arg("use_adalora",   type=bool,  default=True,  help="AdaLora használata Lora helyett")
+add_arg("use_adalora",   type=bool,  default=False,  help="AdaLora használata Lora helyett")
 add_arg("fp16",          type=bool,  default=True,  help="Használjunk-e fp16 pontosságú tanítást")
 add_arg("use_8bit",      type=bool,  default=False, help="Model quantization 8 bitre")
 add_arg("timestamps",    type=bool,  default=False, help="Időbélyeg használata a tanítás során")
@@ -119,7 +126,7 @@ training_args = \
                              warmup_steps=args.warmup_steps,  # Előmelegítő lépések
                              num_train_epochs=args.num_train_epochs,  # Epochok száma
                              save_strategy="steps",  # Checkpoint mentési stratégia
-                             evaluation_strategy="steps",  # Értékelési stratégia
+                             eval_strategy="steps",  # Értékelési stratégia
                              load_best_model_at_end=True,  # Legjobb modell betöltése a végén
                              fp16=args.fp16,  # Fél pontosságú tanítás
                              report_to=["tensorboard"],  # Log mentése tensorboard-ba
@@ -139,17 +146,28 @@ if training_args.local_rank == 0 or training_args.local_rank == -1:
     print('=' * 90)
 
 # Ha PyTorch 2.0+, használjuk a compiler-t (Windows kivétel)
-if torch.__version__ >= "2" and platform.system().lower() != 'windows':
-    model = torch.compile(model)
+# if torch.__version__ >= "2" and platform.system().lower() != 'windows':
+#     model = torch.compile(model)
+
+# Custom Trainer to handle the 'num_items_in_batch' argument issue
+class CustomSeq2SeqTrainer(Seq2SeqTrainer):
+    # Add num_items_in_batch to the signature to accept the 4th positional argument
+    def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]], num_items_in_batch: Optional[int] = None) -> torch.Tensor:
+        """
+        Override training_step to accept the unexpected 'num_items_in_batch' argument
+        but not pass it to the parent method.
+        """
+        # Call the parent training_step without the num_items_in_batch argument
+        return super().training_step(model, inputs)
+
 
 # Tréner definiálása
-trainer = Seq2SeqTrainer(args=training_args,
+trainer = CustomSeq2SeqTrainer(args=training_args,
                          model=model,
                          train_dataset=train_dataset,
                          eval_dataset=test_dataset,
                          data_collator=data_collator,
-                         tokenizer=processor.feature_extractor,
-                         callbacks=[SavePeftModelCallback])
+                         callbacks=None) # Removed SavePeftModelCallback
 model.config.use_cache = False
 trainer._load_from_checkpoint = load_from_checkpoint
 
