@@ -20,9 +20,9 @@ add_arg("test_data",   type=str, default="dataset/test.json",            help="A
 add_arg("model_path",  type=str, default="models/whisper-tiny-finetune", help="Az egyesített modell elérési útja, vagy a huggingface modell neve")
 add_arg("batch_size",  type=int, default=16,        help="Az értékelés batch mérete")
 add_arg("num_workers", type=int, default=8,         help="Az adatok olvasásához használt szálak száma")
-add_arg("language",    type=str, default="Chinese", help="Nyelv beállítása, lehet teljes név vagy rövidítés, ha None, akkor többnyelvű értékelés")
+add_arg("language",    type=str, default="Hungarian", help="Nyelv beállítása, lehet teljes név vagy rövidítés, ha None, akkor többnyelvű értékelés")
 add_arg("remove_pun",  type=bool, default=True,     help="Írásjelek eltávolítása?")
-add_arg("to_simple",   type=bool, default=True,     help="Egyszerűsített kínai karakterek használata?")
+add_arg("to_simple",   type=bool, default=False,     help="Egyszerűsített kínai karakterek használata?")
 add_arg("timestamps",  type=bool, default=False,    help="Időbélyeg adatok használata az értékelés során?")
 add_arg("min_audio_len",     type=float, default=0.5,  help="Minimális hanghossz, másodpercben")
 add_arg("max_audio_len",     type=float, default=30,   help="Maximális hanghossz, másodpercben")
@@ -34,7 +34,7 @@ print_arguments(args)
 
 # Ellenőrizze, hogy a modell elérési útja érvényes-e
 assert 'openai' == os.path.dirname(args.model_path) or os.path.exists(args.model_path), \
-    f"模型文件{args.model_path}不存在，请检查是否已经成功合并模型，或者是否为huggingface存在模型"
+    f"modell file{args.model_path}nem létezik，kérjük, ellenőrizze, hogy a modell egyesítése sikeresen megtörtént-e，vagy létezik-e a modell a huggingface-n."
 # Whisper adatfeldolgozó lekérése, ez tartalmazza a jellemző-kiemelőt és a tokenizert
 processor = WhisperProcessor.from_pretrained(args.model_path,
                                              language=args.language,

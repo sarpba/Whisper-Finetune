@@ -39,7 +39,7 @@ add_arg("fp16",          type=bool,  default=True,  help="Használjunk-e fp16 po
 add_arg("use_8bit",      type=bool,  default=False, help="Model quantization 8 bitre")
 add_arg("timestamps",    type=bool,  default=False, help="Időbélyeg használata a tanítás során")
 add_arg("local_files_only", type=bool, default=False, help="Csak helyi fájlok használata, ne töltsön le semmit")
-add_arg("num_train_epochs", type=int, default=3,      help="Tanítási epochok száma")
+add_arg("num_train_epochs", type=int, default=6,      help="Tanítási epochok száma")
 add_arg("language",      type=str, default="Hungarian", help="A feldolgozandó nyelv (teljes vagy rövidítés)")
 add_arg("task",     type=str, default="transcribe", choices=['transcribe', 'translate'], help="A modell feladata")
 add_arg("augment_config_path",         type=str, default=None, help="Adatbővítési konfigurációs fájl útvonala")
