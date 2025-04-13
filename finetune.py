@@ -28,8 +28,8 @@ add_arg("base_model",    type=str, default="openai/whisper-tiny",      help="A W
 add_arg("output_dir",    type=str, default="output/",                  help="A modell mentési elérési útja")
 add_arg("warmup_steps",  type=int, default=50,      help="A betanítás előmelegítési lépéseinek száma")
 add_arg("logging_steps", type=int, default=100,     help="Naplózási lépések száma")
-add_arg("eval_steps",    type=int, default=1000,    help="Hány lépésenként történjen értékelés")
-add_arg("save_steps",    type=int, default=1000,    help="Hány lépésenként mentsük a modellt")
+add_arg("eval_steps",    type=int, default=10000,    help="Hány lépésenként történjen értékelés")
+add_arg("save_steps",    type=int, default=10000,    help="Hány lépésenként mentsük a modellt")
 add_arg("num_workers",   type=int, default=8,       help="Adatbetöltő szálak száma")
 add_arg("learning_rate", type=float, default=1e-3,  help="Tanulási ráta")
 add_arg("min_audio_len", type=float, default=0.5,   help="Minimális hangfájl hossz, másodpercben")
@@ -39,7 +39,7 @@ add_arg("fp16",          type=bool,  default=True,  help="Használjunk-e fp16 po
 add_arg("use_8bit",      type=bool,  default=False, help="Model quantization 8 bitre")
 add_arg("timestamps",    type=bool,  default=False, help="Időbélyeg használata a tanítás során")
 add_arg("local_files_only", type=bool, default=False, help="Csak helyi fájlok használata, ne töltsön le semmit")
-add_arg("num_train_epochs", type=int, default=6,      help="Tanítási epochok száma")
+add_arg("num_train_epochs", type=int, default=3,      help="Tanítási epochok száma")
 add_arg("language",      type=str, default="Hungarian", help="A feldolgozandó nyelv (teljes vagy rövidítés)")
 add_arg("task",     type=str, default="transcribe", choices=['transcribe', 'translate'], help="A modell feladata")
 add_arg("augment_config_path",         type=str, default=None, help="Adatbővítési konfigurációs fájl útvonala")
@@ -107,7 +107,7 @@ else:
     print(target_modules)
     if args.use_adalora:
         config = AdaLoraConfig(init_r=12, target_r=4, beta1=0.85, beta2=0.85, tinit=200, tfinal=1000, deltaT=10,
-                               lora_alpha=32, lora_dropout=0.1, orth_reg_weight=0.5, target_modules=target_modules)
+                               lora_alpha=32, lora_dropout=0.1, orth_reg_weight=0.5, target_modules=target_modules, total_step=18186)
     else:
         config = LoraConfig(r=32, lora_alpha=64, target_modules=target_modules, lora_dropout=0.05, bias="none")
     model = get_peft_model(model, config)

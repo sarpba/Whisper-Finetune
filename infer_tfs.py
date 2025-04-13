@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description="Whisper audió transzkripciós script")
     add_arg = functools.partial(add_arguments, argparser=parser)
 
-    add_arg("audio_path", type=str, default="dataset/test2.mp3",
+    add_arg("audio_path", type=str, default="dataset/test.wav",
             help="A bemeneti audiófájl elérési útja")
     add_arg("model_path", type=str, default="models/whisper-tiny-finetune",
             help="A modell elérési útja vagy a HuggingFace-modell neve")

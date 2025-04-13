@@ -6,3 +6,4 @@ output/
 dataset/*
 !dataset/test.wav
 test.py
+dataset_old/
